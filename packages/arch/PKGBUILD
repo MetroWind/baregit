@@ -6,6 +6,7 @@ pkgdesc="A lightweight, self-hosted Git web interface and Smart HTTP backend"
 arch=('any')
 url="https://github.com/metrowind/baregit"
 license=('WTFPL')
+backup=('etc/baregit.ini')
 depends=('python' 'python-flask' 'python-requests' 'python-markdown' 'git')
 makedepends=('git')
 provides=("baregit")
