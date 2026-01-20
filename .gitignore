@@ -1,0 +1,5 @@
+baregit.db
+repos/
+config.ini
+__pycache__/
+*.pyc

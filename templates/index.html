@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - BareGit{% endblock %}
+
+{% block content %}
+    <h1>Repositories</h1>
+    {% if session.get('user_name') %}
+        <div style="margin-bottom: 1rem;">
+             <a href="{{ url_for('create_repo') }}" class="btn">New Repository</a>
+        </div>
+    {% endif %}
+
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Owner</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for repo in repos %}
+            <tr>
+                <td><a href="{{ url_for('view_repo', repo_name=repo.name) }}">{{ repo.name }}</a></td>
+                <td>{{ repo.owner_name }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="2">No repositories found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

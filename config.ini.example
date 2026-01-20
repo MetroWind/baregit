@@ -1,0 +1,26 @@
+[server]
+host = 127.0.0.1
+port = 5000
+debug = false
+
+[paths]
+# Directory where application data (database, templates, static) lives
+# Defaults to /var/lib/baregit
+data_path = ./data
+
+# Directory where bare repositories are stored
+# Defaults to <data_path>/repos
+repo_path = ./repos
+
+# Path to the git-http-backend executable
+git_http_backend = /usr/libexec/git-core/git-http-backend
+
+[git]
+# Default branch for new repositories (leave empty to use git default)
+default_branch =
+
+[oidc]
+# The root URL of the OIDC provider
+auth_root_url = http://localhost:8080/realms/master
+client_id = baregit
+client_secret = <your_client_secret>

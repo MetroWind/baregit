@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ path }} - {{ repo_name }}{% endblock %}
+
+{% block content %}
+    <div class="breadcrumbs">
+        <a href="{{ url_for('view_repo', repo_name=repo_name) }}">{{ repo_name }}</a>
+        / 
+        <span>{{ ref }}</span>
+        {% for part in path_parts %}
+            / <a href="{{ url_for('view_tree', repo_name=repo_name, ref_path=ref + '/' + part.full_path) }}">{{ part.name }}</a>
+        {% endfor %}
+    </div>
+
+    <div class="file-content">
+        <pre><code>{{ content }}</code></pre>
+    </div>
+{% endblock %}

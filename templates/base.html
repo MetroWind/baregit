@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BareGit{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="brand">
+            <a href="{{ url_for('index') }}" style="font-weight: bold; font-size: 1.2rem;">BareGit</a>
+        </div>
+        <div class="nav-links">
+            {% if session.get('user_name') %}
+                <a href="{{ url_for('user_settings') }}">{{ session.get('user_name') }}</a>
+                <a href="{{ url_for('auth.logout') }}">Logout</a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}">Login</a>
+            {% endif %}
+        </div>
+    </header>
+    <div class="container">
+        {% for message in get_flashed_messages() %}
+            <div class="flash">{{ message }}</div>
+        {% endfor %}
+        
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

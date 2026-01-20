@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ repo_name }} - BareGit{% endblock %}
+
+{% block content %}
+    <div class="breadcrumbs">
+        <a href="{{ url_for('view_repo', repo_name=repo_name) }}">{{ repo_name }}</a>
+        / 
+        <span>{{ ref }}</span>
+        {% for part in path_parts %}
+            / <a href="{{ url_for('view_tree', repo_name=repo_name, ref_path=ref + '/' + part.full_path) }}">{{ part.name }}</a>
+        {% endfor %}
+    </div>
+
+    <div class="repo-nav" style="margin-bottom: 1rem;">
+        <a href="{{ url_for('view_commits', repo_name=repo_name, ref=ref) }}" class="btn">Commits</a>
+    </div>
+
+    <table class="file-tree">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Size</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if path %}
+                <tr>
+                    <td><a href="..">..</a></td>
+                    <td></td>
+                </tr>
+            {% endif %}
+            
+            {% for file in files %}
+            <tr>
+                <td>
+                    {% if file.type == 'tree' %}
+                        <a href="{{ url_for('view_tree', repo_name=repo_name, ref_path=ref + '/' + file.path) }}">📂 {{ file.name }}</a>
+                    {% else %}
+                        <a href="{{ url_for('view_blob', repo_name=repo_name, ref_path=ref + '/' + file.path) }}">📄 {{ file.name }}</a>
+                    {% endif %}
+                </td>
+                <td>{{ file.size }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if readme_html %}
+        <div class="readme">
+            {{ readme_html | safe }}
+        </div>
+    {% endif %}
+{% endblock %}

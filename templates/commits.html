@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Commits - {{ repo_name }}{% endblock %}
+
+{% block content %}
+    <div class="breadcrumbs">
+        <a href="{{ url_for('view_repo', repo_name=repo_name) }}">{{ repo_name }}</a>
+        / 
+        <span>Commits</span>
+        /
+        <span>{{ ref }}</span>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Hash</th>
+                <th>Message</th>
+                <th>Author</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for commit in commits %}
+            <tr>
+                <td><code>{{ commit.hash[:7] }}</code></td>
+                <td>{{ commit.subject }}</td>
+                <td>{{ commit.author }}</td>
+                <td>{{ commit.date_rel }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

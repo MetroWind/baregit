@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Repository - BareGit{% endblock %}
+
+{% block content %}
+    <h1>Create New Repository</h1>
+    
+    <form method="post">
+        <div style="margin-bottom: 1rem;">
+            <label for="name" style="display: block; margin-bottom: 5px;">Repository Name:</label>
+            <input type="text" id="name" name="name" required pattern="^[a-zA-Z0-9._-]+$" title="Alphanumeric, dots, underscores, hyphens only.">
+            <small style="color: #666;">Allowed characters: a-z, 0-9, ., _, -</small>
+        </div>
+        
+        <button type="submit" class="btn" style="background-color: #2da44e; color: white;">Create Repository</button>
+    </form>
+{% endblock %}

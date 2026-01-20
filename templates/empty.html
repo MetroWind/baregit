@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ repo_name }} (Empty) - BareGit{% endblock %}
+
+{% block content %}
+    <h1>{{ repo_name }}</h1>
+    <div class="flash" style="background-color: #f1f8ff; border-color: #c8e1ff; color: #0366d6;">
+        This repository is empty.
+    </div>
+
+    <div class="readme">
+        <h3>Quick Setup</h3>
+        <p>Use the following commands to get started.</p>
+        
+        <h4>Clone this repository</h4>
+        <div class="file-content">
+            <pre><code>git clone {{ clone_url }}</code></pre>
+        </div>
+
+        <h4>...or create a new repository on the command line</h4>
+        <div class="file-content">
+            <pre><code>echo "# {{ repo_name }}" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M {{ default_branch }}
+git remote add origin {{ clone_url }}
+git push -u origin {{ default_branch }}</code></pre>
+        </div>
+
+        <h4>...or push an existing repository from the command line</h4>
+        <div class="file-content">
+            <pre><code>git remote add origin {{ clone_url }}
+git branch -M {{ default_branch }}
+git push -u origin {{ default_branch }}</code></pre>
+        </div>
+        
+        <p style="margin-top: 1rem;">
+            <strong>Note:</strong> You will need to use your <strong>Git HTTP Password</strong> (set in User Settings), 
+            NOT your login password.
+        </p>
+    </div>
+{% endblock %}

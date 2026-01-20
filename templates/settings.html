@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}User Settings - BareGit{% endblock %}
+
+{% block content %}
+    <h1>User Settings</h1>
+    
+    <h2>Git HTTP Credentials</h2>
+    <p>These credentials are used for <code>git clone</code>, <code>git push</code>, etc.</p>
+    
+    <form method="post">
+        <div style="margin-bottom: 1rem;">
+            <label for="password" style="display: block; margin-bottom: 5px;">New Git Password:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        
+        <button type="submit" class="btn">Update Password</button>
+    </form>
+{% endblock %}
