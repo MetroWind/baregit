@@ -164,6 +164,9 @@ client_secret = <secret>
 *   **Repo Settings (`GET/POST /settings`)**:
     *   Allows user to set/change Git HTTP password.
     *   Logic: Generate 16-byte random hex salt. Hash password + salt. Update DB.
+    *   **Delete Repo (`POST /settings/delete/<repo_name>`)**:
+        *   Allows owner to delete a repository.
+        *   Logic: Verify ownership. Delete directory from disk. Delete record from DB.
 *   **Repo View (`GET /<repo_name>`)**:
     *   Logic: Get default branch. Get `README` content. Get root tree.
 *   **Tree View (`GET /<repo_name>/tree/<ref>/<path>`)**:

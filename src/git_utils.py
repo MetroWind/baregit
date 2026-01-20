@@ -177,6 +177,12 @@ def init_bare_repo(repo_name):
         
     subprocess.run(['git'] + args + [repo_path], check=True)
 
+def delete_repo(repo_name):
+    import shutil
+    repo_path = get_repo_path(repo_name)
+    if os.path.exists(repo_path):
+        shutil.rmtree(repo_path)
+
 def get_refs(repo_name):
     # Returns a list of ref names (branches and tags)
     # git for-each-ref --format='%(refname:short)' refs/heads refs/tags

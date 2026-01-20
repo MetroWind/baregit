@@ -124,8 +124,41 @@ def user_settings():
         
         flash("Git password updated successfully.")
         return redirect(url_for('index'))
+    
+    conn = database.get_db()
+    repos = conn.execute("SELECT * FROM repos WHERE owner_id = ?", (session['user_id'],)).fetchall()
+    conn.close()
         
-    return render_template('settings.html')
+    return render_template('settings.html', repos=repos)
+
+@app.route('/settings/delete/<repo_name>', methods=['POST'])
+@login_required
+def delete_repo_route(repo_name):
+    conn = database.get_db()
+    try:
+        repo = conn.execute("SELECT * FROM repos WHERE name = ?", (repo_name,)).fetchone()
+        if not repo:
+            abort(404)
+            
+        if repo['owner_id'] != session['user_id']:
+            abort(403)
+            
+        # Delete from disk
+        try:
+            git_utils.delete_repo(repo_name)
+        except Exception as e:
+            flash(f"Error deleting repository files: {e}")
+            return redirect(url_for('user_settings'))
+
+        # Delete from DB
+        conn.execute("DELETE FROM repos WHERE id = ?", (repo['id'],))
+        conn.commit()
+        
+        flash(f"Repository '{repo_name}' deleted successfully.")
+    finally:
+        conn.close()
+        
+    return redirect(url_for('user_settings'))
 
 @app.route('/<repo_name>/')
 def view_repo(repo_name):
