@@ -76,6 +76,25 @@ A `PKGBUILD` and systemd service file are provided in `packages/arch/`.
     sudo systemctl enable --now baregit
     ```
 
+### Reverse Proxy Configuration
+
+It is recommended to run BareGit behind a reverse proxy (Nginx or Apache) to handle SSL.
+
+**Apache Example:**
+```apache
+<VirtualHost *:443>
+    ServerName git.example.com
+    
+    # SSL Configuration...
+    
+    ProxyPreserveHost On
+    RequestHeader set X-Forwarded-Proto "https"
+    
+    ProxyPass / http://127.0.0.1:5000/
+    ProxyPassReverse / http://127.0.0.1:5000/
+</VirtualHost>
+```
+
 ### CLI Usage
 
 BareGit includes a CLI for administrative tasks, primarily used for migration or synchronization.

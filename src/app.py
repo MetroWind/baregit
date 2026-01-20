@@ -12,6 +12,7 @@ import database
 from auth import auth_bp, login_required
 import git_utils
 import markdown
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Configure paths from config
 # Initial load with defaults
@@ -20,6 +21,7 @@ template_dir = os.path.join(data_path, 'templates')
 static_dir = os.path.join(data_path, 'static')
 
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 app.register_blueprint(auth_bp)
 
 def create_app():
