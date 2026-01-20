@@ -1,41 +1,50 @@
-pkgname=baregit
-pkgver=0.1.0
+# Maintainer: MetroWind <mill_@msn.com>
+pkgname=baregit-git
+pkgver=r1.2d2827b
 pkgrel=1
 pkgdesc="A lightweight, self-hosted Git web interface and Smart HTTP backend"
 arch=('any')
 url="https://github.com/metrowind/baregit"
 license=('WTFPL')
 depends=('python' 'python-flask' 'python-requests' 'python-markdown' 'git')
-source=("baregit.service"
+makedepends=('git')
+provides=("baregit")
+conflicts=("baregit")
+source=("git+https://github.com/metrowind/baregit.git"
+        "baregit.service"
         "baregit.sysusers"
         "baregit.ini")
 sha256sums=('SKIP'
-            'SKIP'
-            'SKIP')
-# Assuming the source is the current directory; in a real PKGBUILD, you'd pull from git/url.
-# For this generated file, we assume the user builds it from the repo root.
+            '290fc856a74e63e34ca10c645fef305179283eb1503f3a34e186e54e778c7a0f'
+            '01de1fc10665c8de46ccfdebe5df196d09b4c7a08250b70b724f061024497482'
+            '341d7ec304437e505d309db04643529faa21b39ebd743caf818204ccf7b32803')
+
+pkgver() {
+  cd "$srcdir/baregit"
+  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
 
 package() {
-  cd "$srcdir/../../"
-
+  cd "$srcdir/baregit"
+  
   # 1. Install Source Code to /usr/lib/baregit
   install -d "$pkgdir/usr/lib/baregit/src"
-  cp -r src/* "$pkgdir/usr/lib/baregit/src/"
-
+  install -m 644 src/* "$pkgdir/usr/lib/baregit/src/"
+  
   # 2. Install Configuration to /etc/baregit.ini
-  install -m 640 "$srcdir/baregit.ini" "$pkgdir/etc/baregit.ini"
-
+  install -D -m 640 "$srcdir/baregit.ini" "$pkgdir/etc/baregit.ini"
+  
   # 3. Setup Data Directory /var/lib/baregit
   install -d "$pkgdir/var/lib/baregit"
   install -d "$pkgdir/var/lib/baregit/repos"
-
-  # Copy static assets to data directory as per our design
+  
+  # Copy static assets to data directory
   cp -r templates "$pkgdir/var/lib/baregit/"
   cp -r static "$pkgdir/var/lib/baregit/"
-
+  
   # 4. Systemd Service
   install -D -m 644 "$srcdir/baregit.service" "$pkgdir/usr/lib/systemd/system/baregit.service"
-
+  
   # 5. Sysusers
   install -D -m 644 "$srcdir/baregit.sysusers" "$pkgdir/usr/lib/sysusers.d/baregit.conf"
 }
