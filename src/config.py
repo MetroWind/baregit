@@ -2,7 +2,7 @@ import configparser
 import os
 import sys
 
-def load_config(config_file='baregit.ini'):
+def load_config(config_file=None):
     config = configparser.ConfigParser()
     
     # Defaults
@@ -20,10 +20,15 @@ def load_config(config_file='baregit.ini'):
         'client_secret': ''
     }
 
-    if config_file and os.path.exists(config_file):
-        config.read(config_file)
-    elif config_file:
-         print(f"Warning: Configuration file {config_file} not found. Using defaults.")
+    if config_file:
+        if os.path.exists(config_file):
+            config.read(config_file)
+        else:
+            print(f"Warning: Configuration file {config_file} not found. Using defaults.")
+    else:
+        # Default behavior: try baregit.ini silently
+        if os.path.exists('baregit.ini'):
+            config.read('baregit.ini')
 
     return config
 
