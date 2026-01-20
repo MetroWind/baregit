@@ -224,7 +224,7 @@ def view_tree(repo_name, ref_path):
                 content = git_utils.get_blob_content(repo_name, file['object'])
                 text_content = content.decode('utf-8', errors='replace')
                 if file['name'].lower().endswith('.md'):
-                    readme_html = markdown.markdown(text_content)
+                    readme_html = markdown.markdown(text_content, extensions=['fenced_code', 'codehilite'])
                 else:
                     readme_html = f"<pre>{text_content}</pre>"
             except Exception:

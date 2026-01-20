@@ -37,7 +37,7 @@ deployment-friendly, and free of heavy frontend frameworks.
     ```bash
     python3 -m venv venv
     source venv/bin/activate
-    pip install flask requests markdown
+    pip install flask requests markdown pygments
     ```
 
 3.  **Configure**:
