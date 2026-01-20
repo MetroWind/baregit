@@ -1,6 +1,10 @@
 # BareGit
 
-BareGit is a lightweight, self-hosted Git web interface and Smart HTTP backend built with Python and Flask. It is designed to be simple, deployment-friendly, and free of heavy frontend frameworks.
+BareGit is a lightweight, self-hosted Git web interface and Smart HTTP
+backend built with Python and Flask. It is designed to be simple,
+deployment-friendly, and free of heavy frontend frameworks.
+
+![screenshot](screenshot.png)
 
 ## Features
 
