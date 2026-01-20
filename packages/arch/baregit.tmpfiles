@@ -1,0 +1,3 @@
+d /var/lib/baregit 0755 baregit baregit -
+d /var/lib/baregit/repos 0700 baregit baregit -
+Z /var/lib/baregit - baregit baregit -

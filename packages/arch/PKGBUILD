@@ -14,10 +14,12 @@ conflicts=("baregit")
 source=("git+https://github.com/metrowind/baregit.git"
         "baregit.service"
         "baregit.sysusers"
+        "baregit.tmpfiles"
         "baregit.ini")
 sha256sums=('SKIP'
             '290fc856a74e63e34ca10c645fef305179283eb1503f3a34e186e54e778c7a0f'
             '01de1fc10665c8de46ccfdebe5df196d09b4c7a08250b70b724f061024497482'
+            '0a48d63f2f7b597a95de87246994c570572dbe73f97cf1100804666bd13ce6ab'
             '341d7ec304437e505d309db04643529faa21b39ebd743caf818204ccf7b32803')
 
 pkgver() {
@@ -48,4 +50,7 @@ package() {
   
   # 5. Sysusers
   install -D -m 644 "$srcdir/baregit.sysusers" "$pkgdir/usr/lib/sysusers.d/baregit.conf"
+  
+  # 6. Tmpfiles
+  install -D -m 644 "$srcdir/baregit.tmpfiles" "$pkgdir/usr/lib/tmpfiles.d/baregit.conf"
 }
