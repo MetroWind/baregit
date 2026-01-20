@@ -7,7 +7,7 @@ from functools import wraps
 
 auth_bp = Blueprint('auth', __name__)
 
-def get_oidc_config():
+def getOidcConfig():
     auth_root = config['oidc']['auth_root_url']
     if not auth_root:
         return None
@@ -24,7 +24,7 @@ def get_oidc_config():
 
 @auth_bp.route('/login')
 def login():
-    oidc_cfg = get_oidc_config()
+    oidc_cfg = getOidcConfig()
     if not oidc_cfg:
         return "OIDC Configuration Error", 500
 
@@ -59,7 +59,7 @@ def callback():
     if state != session.get('oauth_state'):
         return "Invalid State", 400
     
-    oidc_cfg = get_oidc_config()
+    oidc_cfg = getOidcConfig()
     if not oidc_cfg:
         return "OIDC Configuration Error", 500
 
@@ -101,7 +101,7 @@ def callback():
     preferred_username = userinfo.get("preferred_username", sub) # Fallback to sub if no username
 
     # Update or Create User in DB
-    conn = database.get_db()
+    conn = database.getDb()
     cursor = conn.cursor()
     cursor.execute("SELECT id, preferred_username FROM users WHERE sub = ?", (sub,))
     user = cursor.fetchone()
@@ -129,7 +129,7 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
-def login_required(f):
+def loginRequired(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:

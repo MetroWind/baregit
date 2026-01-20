@@ -3,12 +3,12 @@ import os
 import secrets
 from config import config
 
-def get_db_path():
+def getDbPath():
     data_path = config['paths']['data_path']
     return os.path.join(data_path, 'baregit.db')
 
-def get_db():
-    db_path = get_db_path()
+def getDb():
+    db_path = getDbPath()
     # Ensure directory exists
     db_dir = os.path.dirname(db_path)
     if db_dir and not os.path.exists(db_dir):
@@ -18,8 +18,8 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
-def init_db():
-    conn = get_db()
+def initDb():
+    conn = getDb()
     cursor = conn.cursor()
 
     # Table: users
@@ -54,8 +54,8 @@ def init_db():
     conn.commit()
     conn.close()
 
-def get_or_create_secret_key():
-    conn = get_db()
+def getOrCreateSecretKey():
+    conn = getDb()
     cursor = conn.cursor()
     
     cursor.execute("SELECT value FROM system_config WHERE key='flask_secret_key'")

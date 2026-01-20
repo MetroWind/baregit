@@ -2,7 +2,7 @@ import configparser
 import os
 import sys
 
-def load_config(config_file=None):
+def loadConfig(config_file=None):
     config = configparser.ConfigParser()
     
     # Defaults
@@ -32,11 +32,11 @@ def load_config(config_file=None):
 
     return config
 
-config = load_config()
+config = loadConfig()
 
-def reload_config_from_file(path):
+def reloadConfigFromFile(path):
     global config
-    new_conf = load_config(path)
+    new_conf = loadConfig(path)
     # Update the global object in place to affect importers
     for section in new_conf.sections():
         if not config.has_section(section):

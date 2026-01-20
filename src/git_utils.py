@@ -5,7 +5,7 @@ from config import config
 class GitError(Exception):
     pass
 
-def get_repo_path(repo_name):
+def getRepoPath(repo_name):
     # Security: Ensure repo_name doesn't have path traversal
     if os.path.sep in repo_name or '..' in repo_name:
         raise ValueError("Invalid repository name")
@@ -13,8 +13,8 @@ def get_repo_path(repo_name):
     # Per PRD: The repo dir name will be <repo_name>.git
     return os.path.join(config['paths']['repo_path'], f"{repo_name}.git")
 
-def run_git(repo_name, command_args, encoding='utf-8', errors='replace'):
-    repo_path = get_repo_path(repo_name)
+def runGit(repo_name, command_args, encoding='utf-8', errors='replace'):
+    repo_path = getRepoPath(repo_name)
     if not os.path.exists(repo_path):
         raise GitError(f"Repository {repo_name} not found")
 
@@ -38,31 +38,31 @@ def run_git(repo_name, command_args, encoding='utf-8', errors='replace'):
     except subprocess.CalledProcessError as e:
         raise GitError(f"Git command failed: {e.stderr.decode('utf-8', errors='replace') if e.stderr else str(e)}")
 
-def get_default_branch(repo_name):
+def getDefaultBranch(repo_name):
     try:
         # symbolic-ref HEAD usually points to refs/heads/master or refs/heads/main
-        head_ref = run_git(repo_name, ['symbolic-ref', 'HEAD']).strip()
+        head_ref = runGit(repo_name, ['symbolic-ref', 'HEAD']).strip()
         return head_ref.replace('refs/heads/', '')
     except GitError:
         # Fallback if HEAD is detached or empty
         return "HEAD"
 
-def is_repo_empty(repo_name):
+def isRepoEmpty(repo_name):
     # Checks if the repository has any commits
     try:
-        run_git(repo_name, ['rev-parse', '--verify', 'HEAD'])
+        runGit(repo_name, ['rev-parse', '--verify', 'HEAD'])
         return False
     except GitError:
         return True
 
-def list_tree(repo_name, ref, path=''):
+def listTree(repo_name, ref, path=''):
     # git ls-tree -z -l <ref>:<path>
     # -z: null-terminated
     # -l: long format (permissions, type, size, name)
     
     target = f"{ref}:{path}" if path else ref
     try:
-        output = run_git(repo_name, ['ls-tree', '-z', '-l', target])
+        output = runGit(repo_name, ['ls-tree', '-z', '-l', target])
     except GitError:
         return []
 
@@ -109,9 +109,9 @@ def list_tree(repo_name, ref, path=''):
         
     return entries
 
-def get_blob_content(repo_name, blob_hash):
+def getBlobContent(repo_name, blob_hash):
     # Returns raw bytes
-    repo_path = get_repo_path(repo_name)
+    repo_path = getRepoPath(repo_name)
     cmd = ['git', '-C', repo_path, 'cat-file', 'blob', blob_hash]
     try:
         result = subprocess.run(cmd, capture_output=True, check=True)
@@ -119,7 +119,7 @@ def get_blob_content(repo_name, blob_hash):
     except subprocess.CalledProcessError:
         return b""
 
-def get_commit_log(repo_name, ref, limit=100):
+def getCommitLog(repo_name, ref, limit=100):
     # git log --pretty=format:"%H%x00%an%x00%at%x00%s" -z -n <limit> <ref>
     # %H: Hash, %an: Author Name, %at: Author Time (unix), %s: Subject
     
@@ -132,7 +132,7 @@ def get_commit_log(repo_name, ref, limit=100):
     ]
     
     try:
-        output = run_git(repo_name, args)
+        output = runGit(repo_name, args)
     except GitError:
         return []
         
@@ -162,8 +162,8 @@ def get_commit_log(repo_name, ref, limit=100):
         
     return commits
 
-def init_bare_repo(repo_name):
-    repo_path = get_repo_path(repo_name)
+def initBareRepo(repo_name):
+    repo_path = getRepoPath(repo_name)
     if os.path.exists(repo_path):
         raise GitError("Repository already exists")
     
@@ -177,27 +177,27 @@ def init_bare_repo(repo_name):
         
     subprocess.run(['git'] + args + [repo_path], check=True)
 
-def delete_repo(repo_name):
+def deleteRepo(repo_name):
     import shutil
-    repo_path = get_repo_path(repo_name)
+    repo_path = getRepoPath(repo_name)
     if os.path.exists(repo_path):
         shutil.rmtree(repo_path)
 
-def get_refs(repo_name):
+def getRefs(repo_name):
     # Returns a list of ref names (branches and tags)
     # git for-each-ref --format='%(refname:short)' refs/heads refs/tags
     try:
-        output = run_git(repo_name, ['for-each-ref', '--format=%(refname:short)', 'refs/heads', 'refs/tags'])
+        output = runGit(repo_name, ['for-each-ref', '--format=%(refname:short)', 'refs/heads', 'refs/tags'])
         return output.splitlines()
     except GitError:
         return []
 
-def split_ref_path(repo_name, full_path):
+def splitRefPath(repo_name, full_path):
     # Tries to determine where the ref ends and path starts.
     # Strategy: Match against known refs, longest match wins.
     # If no match found, assume first component is ref (fallback).
     
-    refs = get_refs(repo_name)
+    refs = getRefs(repo_name)
     # Sort by length descending to match longest first
     refs.sort(key=len, reverse=True)
     

@@ -6,7 +6,7 @@
     <h1>Repositories</h1>
     {% if session.get('user_name') %}
         <div style="margin-bottom: 1rem;">
-             <a href="{{ url_for('create_repo') }}" class="btn">New Repository</a>
+             <a href="{{ url_for('createRepo') }}" class="btn">New Repository</a>
         </div>
     {% endif %}
 
@@ -20,7 +20,7 @@
         <tbody>
             {% for repo in repos %}
             <tr>
-                <td><a href="{{ url_for('view_repo', repo_name=repo.name) }}">{{ repo.name }}</a></td>
+                <td><a href="{{ url_for('viewRepo', repo_name=repo.name) }}">{{ repo.name }}</a></td>
                 <td>{{ repo.owner_name }}</td>
             </tr>
             {% else %}
