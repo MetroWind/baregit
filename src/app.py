@@ -14,11 +14,8 @@ import git_utils
 import markdown
 
 # Configure paths from config
+# Initial load with defaults
 data_path = os.path.abspath(config['paths']['data_path'])
-if not os.path.exists(data_path):
-    print(f"Warning: Data path {data_path} does not exist. Creating it.")
-    os.makedirs(data_path)
-
 template_dir = os.path.join(data_path, 'templates')
 static_dir = os.path.join(data_path, 'static')
 
@@ -26,6 +23,16 @@ app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 app.register_blueprint(auth_bp)
 
 def create_app():
+    # Re-evaluate paths in case config changed (e.g. via CLI arg)
+    data_path = os.path.abspath(config['paths']['data_path'])
+    if not os.path.exists(data_path):
+        print(f"Warning: Data path {data_path} does not exist. Creating it.")
+        os.makedirs(data_path)
+
+    # Update Flask app paths
+    app.template_folder = os.path.join(data_path, 'templates')
+    app.static_folder = os.path.join(data_path, 'static')
+    
     # Initialize DB
     database.init_db()
     
@@ -442,20 +449,28 @@ def import_repo_cli(repo_name, owner_username):
 
 if __name__ == '__main__':
     # CLI Argument Parsing
-    if len(sys.argv) > 1 and (sys.argv[1] == '--import-repo' or sys.argv[1] == '--help'):
-        parser = argparse.ArgumentParser(description='BareGit Management')
-        parser.add_argument('--import-repo', help='Import an existing repository by name (folder name without .git)')
-        parser.add_argument('--owner', help='Owner username for the imported repo')
+    parser = argparse.ArgumentParser(
+        description='BareGit Management',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument('--import-repo', help='Import an existing repository by name (folder name without .git)')
+    parser.add_argument('--owner', help='Owner username for the imported repo')
+    parser.add_argument('--config', default='baregit.ini', help='Path to configuration file')
+    
+    args = parser.parse_args()
+
+    if args.config:
+        from config import reload_config_from_file
+        reload_config_from_file(args.config)
         
-        args = parser.parse_args()
-        
-        if args.import_repo:
-            if not args.owner:
-                print("Error: --owner is required.")
-                sys.exit(1)
-            import_repo_cli(args.import_repo, args.owner)
-        else:
-            parser.print_help()
+    # Initialize the application (DB, paths, etc) with potentially new config
+    create_app()
+
+    if args.import_repo:
+        if not args.owner:
+            print("Error: --owner is required.")
+            sys.exit(1)
+        import_repo_cli(args.import_repo, args.owner)
     else:
         # Run Server
         host = config['server']['host']

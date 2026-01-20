@@ -1,0 +1,13 @@
+[Unit]
+Description=BareGit Server
+After=network.target
+
+[Service]
+User=baregit
+Group=baregit
+WorkingDirectory=/usr/lib/baregit
+ExecStart=/usr/bin/python src/app.py --config /etc/baregit.ini
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

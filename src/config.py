@@ -2,7 +2,7 @@ import configparser
 import os
 import sys
 
-def load_config(config_file='config.ini'):
+def load_config(config_file='baregit.ini'):
     config = configparser.ConfigParser()
     
     # Defaults
@@ -20,12 +20,21 @@ def load_config(config_file='config.ini'):
         'client_secret': ''
     }
 
-    if os.path.exists(config_file):
+    if config_file and os.path.exists(config_file):
         config.read(config_file)
-    else:
-        print(f"Warning: Configuration file {config_file} not found. Using defaults.")
+    elif config_file:
+         print(f"Warning: Configuration file {config_file} not found. Using defaults.")
 
     return config
 
-# Load config once to be imported by other modules
 config = load_config()
+
+def reload_config_from_file(path):
+    global config
+    new_conf = load_config(path)
+    # Update the global object in place to affect importers
+    for section in new_conf.sections():
+        if not config.has_section(section):
+            config.add_section(section)
+        for key, val in new_conf.items(section):
+            config[section][key] = val

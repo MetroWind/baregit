@@ -1,0 +1,41 @@
+pkgname=baregit
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="A lightweight, self-hosted Git web interface and Smart HTTP backend"
+arch=('any')
+url="https://github.com/your-org/baregit"
+license=('MIT')
+depends=('python' 'python-flask' 'python-requests' 'python-markdown' 'git')
+source=("baregit.service"
+        "baregit.sysusers"
+        "baregit.ini")
+sha256sums=('SKIP'
+            'SKIP'
+            'SKIP')
+# Assuming the source is the current directory; in a real PKGBUILD, you'd pull from git/url.
+# For this generated file, we assume the user builds it from the repo root.
+
+package() {
+  cd "$srcdir/../../"
+
+  # 1. Install Source Code to /usr/lib/baregit
+  install -d "$pkgdir/usr/lib/baregit/src"
+  cp -r src/* "$pkgdir/usr/lib/baregit/src/"
+
+  # 2. Install Configuration to /etc/baregit.ini
+  install -m 640 "$srcdir/baregit.ini" "$pkgdir/etc/baregit.ini"
+
+  # 3. Setup Data Directory /var/lib/baregit
+  install -d "$pkgdir/var/lib/baregit"
+  install -d "$pkgdir/var/lib/baregit/repos"
+
+  # Copy static assets to data directory as per our design
+  cp -r templates "$pkgdir/var/lib/baregit/"
+  cp -r static "$pkgdir/var/lib/baregit/"
+
+  # 4. Systemd Service
+  install -D -m 644 "$srcdir/baregit.service" "$pkgdir/usr/lib/systemd/system/baregit.service"
+
+  # 5. Sysusers
+  install -D -m 644 "$srcdir/baregit.sysusers" "$pkgdir/usr/lib/sysusers.d/baregit.conf"
+}

@@ -191,13 +191,16 @@ client_secret = <secret>
     *   `subprocess.Popen` with `stdin=request.stream`, `stdout=PIPE`, `stderr=PIPE`.
     *   Stream stdout back to Flask response with correct Content-Type.
 
-### 6.3. CLI: Import Repo
-*   Command: `python src/app.py --import-repo <name> --owner <user>`
-*   Logic:
-    *   Check if `<repo_path>/<name>.git` exists.
-    *   Check if `<name>` is already in DB. (If so, abort).
-    *   Check if `<user>` exists in DB.
-    *   `INSERT INTO repos ...`.
+### 6.3. CLI: Management
+*   **Run Server**: `python src/app.py [--config <path>]`
+*   **Import Repo**: `python src/app.py --import-repo <name> --owner <user> [--config <path>]`
+*   **Logic**:
+    *   The `--config` flag allows specifying an external configuration file (default: `baregit.ini`).
+    *   `--import-repo` Logic:
+        *   Check if `<repo_path>/<name>.git` exists.
+        *   Check if `<name>` is already in DB. (If so, abort).
+        *   Check if `<user>` exists in DB.
+        *   `INSERT INTO repos ...`.
 
 ## 7. Implementation Details
 
