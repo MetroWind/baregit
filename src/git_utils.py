@@ -168,6 +168,39 @@ def getCommitLog(repo_name, ref, limit=100):
         
     return commits
 
+def getCommitDetails(repo_name, commit_hash):
+    # 1. Get Metadata
+    # Format: Hash, Author Name, Author Email, Date, Subject, Body
+    fmt = "%H%x00%an%x00%ae%x00%ad%x00%s%x00%b"
+    cmd_meta = ['show', '-s', f'--format={fmt}', '-z', commit_hash]
+    
+    try:
+        output_meta = runGit(repo_name, cmd_meta)
+    except GitError:
+        return None
+
+    parts = output_meta.split('\0')
+    if len(parts) < 6:
+        return None
+
+    # 2. Get Diff
+    # We use --pretty=format: to suppress the log message in the diff output
+    cmd_diff = ['show', '--pretty=format:', commit_hash]
+    try:
+        output_diff = runGit(repo_name, cmd_diff)
+    except GitError:
+        output_diff = "Could not retrieve diff."
+
+    return {
+        'hash': parts[0],
+        'author': parts[1],
+        'email': parts[2],
+        'date': parts[3],
+        'subject': parts[4],
+        'body': parts[5],
+        'diff': output_diff.strip()
+    }
+
 def initBareRepo(repo_name):
     repo_path = getRepoPath(repo_name)
     if os.path.exists(repo_path):

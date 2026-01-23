@@ -23,8 +23,8 @@
         <tbody>
             {% for commit in commits %}
             <tr>
-                <td><code>{{ commit.hash[:7] }}</code></td>
-                <td>{{ commit.subject }}</td>
+                <td><code><a href="{{ url_for('viewCommit', repo_name=repo_name, commit_hash=commit.hash) }}">{{ commit.hash[:7] }}</a></code></td>
+                <td><a href="{{ url_for('viewCommit', repo_name=repo_name, commit_hash=commit.hash) }}">{{ commit.subject }}</a></td>
                 <td>{{ commit.author }}</td>
                 <td>{{ commit.date_rel }}</td>
             </tr>

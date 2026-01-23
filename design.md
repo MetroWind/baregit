@@ -180,6 +180,11 @@ client_secret = <secret>
     *   Logic: Clear session. Redirect to Index.
 *   **Commit History (`GET /<repo_name>/commits/<ref>`)**:
     *   Logic: `git log --pretty=format:"%H%x00%an%x00%at%x00%s" -z -n 100 <ref>`. Parse output.
+*   **Commit View (`GET /<repo_name>/commit/<commit_hash>`)**:
+    *   Logic:
+        1.  Fetch metadata (author, date, subject, body) via `git show -s --format=...`.
+        2.  Fetch diff via `git show --pretty=format:`.
+        3.  Render template with metadata and raw diff.
 
 ### 6.2. Git Smart HTTP Handling (`ANY /<repo_name>.git/*`)
 *   **Path Parsing:** Regex match to extract `<repo_name>`.

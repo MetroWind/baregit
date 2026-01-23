@@ -293,6 +293,20 @@ def viewCommits(repo_name, ref):
 
     return render_template('commits.html', repo_name=repo_name, ref=ref, commits=commits)
 
+@app.route('/<repo_name>/commit/<commit_hash>')
+def viewCommit(repo_name, commit_hash):
+    conn = database.getDb()
+    exists = conn.execute("SELECT 1 FROM repos WHERE name = ?", (repo_name,)).fetchone()
+    conn.close()
+    if not exists:
+         return abort(404)
+         
+    commit = git_utils.getCommitDetails(repo_name, commit_hash)
+    if not commit:
+        return abort(404)
+        
+    return render_template('commit.html', repo_name=repo_name, commit=commit)
+
 
 # --- Git Smart HTTP Backend ---
 
