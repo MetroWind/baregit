@@ -20,13 +20,15 @@
         <thead>
             <tr>
                 <th>Name</th>
-                <th>Size</th>
+                <th>Latest commit</th>
+                <th>Last update</th>
             </tr>
         </thead>
         <tbody>
             {% if path %}
                 <tr>
                     <td><a href="..">..</a></td>
+                    <td></td>
                     <td></td>
                 </tr>
             {% endif %}
@@ -40,7 +42,12 @@
                         <a href="{{ url_for('viewBlob', repo_name=repo_name, ref_path=ref + '/' + file.path) }}">📄 {{ file.name }}</a>
                     {% endif %}
                 </td>
-                <td>{{ file.size }}</td>
+                <td>
+                    {% if file.commit_hash %}
+                        <a href="{{ url_for('viewCommit', repo_name=repo_name, commit_hash=file.commit_hash) }}">{{ file.commit_subject }}</a>
+                    {% endif %}
+                </td>
+                <td>{{ file.commit_date }}</td>
             </tr>
             {% endfor %}
         </tbody>
