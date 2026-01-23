@@ -225,7 +225,7 @@ def viewTree(repo_name, ref_path):
                 content = git_utils.getBlobContent(repo_name, file['object'])
                 text_content = content.decode('utf-8', errors='replace')
                 if file['name'].lower().endswith('.md'):
-                    readme_html = markdown.markdown(text_content, extensions=['fenced_code', 'codehilite'])
+                    readme_html = markdown.markdown(text_content, extensions=['fenced_code', 'codehilite', 'tables'])
                 else:
                     readme_html = f"<pre>{escape(text_content)}</pre>"
             except Exception:
