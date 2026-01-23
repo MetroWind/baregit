@@ -175,7 +175,9 @@ client_secret = <secret>
         2.  Sort directories before files.
         3.  Check for `README.md` or `README.txt` in the current `<path>`. If found, render content using `markdown` (for `.md`) or as-is (for `.txt`) and include in the template.
 *   **Blob View (`GET /<repo_name>/blob/<ref>/<path>`)**:
-    *   Logic: `git cat-file blob <ref>:<path>`. Return raw text/binary.
+    *   Logic: `git cat-file blob <ref>:<path>`. Decodes content as UTF-8. If decoding fails (binary), displays a placeholder message. Renders within the web UI.
+*   **Logout (`GET /logout`)**:
+    *   Logic: Clear session. Redirect to Index.
 *   **Commit History (`GET /<repo_name>/commits/<ref>`)**:
     *   Logic: `git log --pretty=format:"%H%x00%an%x00%at%x00%s" -z -n 100 <ref>`. Parse output.
 
@@ -227,6 +229,15 @@ To ensure robustness and avoid shell injection:
         *   `secret = secrets.token_hex(32)`
         *   `INSERT ...`
     4.  `app.secret_key = secret`
+
+### 7.4. Ref vs Path Disambiguation
+URLs for tree and blob views (`/<repo>/tree/<ref>/<path>`) do not use a strict separator between the git reference (branch/tag) and the file path. To correctly parse these:
+1.  The application fetches all valid refs (branches and tags) for the repository.
+2.  It matches the URL segment against these refs (longest match first).
+3.  The remainder of the URL is treated as the file path.
+
+### 7.5. Proxy Awareness
+The Flask application wraps its WSGI app with `werkzeug.middleware.proxy_fix.ProxyFix`. This ensures that when deployed behind a reverse proxy (common in production or specific dev setups), the application correctly identifies the client's IP, protocol (HTTPS), and host, which is critical for correct OIDC redirect URI generation.
 
 ## 8. Security Considerations
 *   **Input Validation:**
