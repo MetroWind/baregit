@@ -171,9 +171,10 @@ client_secret = <secret>
     *   Logic: Get default branch. Get `README` content. Get root tree.
 *   **Tree View (`GET /<repo_name>/tree/<ref>/<path>`)**:
     *   Logic:
-        1.  Call `git ls-tree -z --long <ref>:<path>`. Parse null-terminated output to get permissions, type (blob/tree), size, and name.
-        2.  Sort directories before files.
-        3.  Check for `README.md` or `README.txt` in the current `<path>`. If found, render content using `markdown` (for `.md`) or as-is (for `.txt`) and include in the template.
+        1.  Call `git ls-tree -z --long <ref>:<path>`. Parse null-terminated output to get permissions, type (blob/tree), and name.
+        2.  For each file/directory, determine the latest commit that modified it by running `git log`. To optimize performance, this is done in batches of 50 files per subprocess, and the stream is terminated as soon as all files in the batch are accounted for.
+        3.  Sort directories before files.
+        4.  Check for `README.md` or `README.txt` in the current `<path>`. If found, render content using `markdown` (for `.md`) or as-is (for `.txt`) and include in the template.
 *   **Blob View (`GET /<repo_name>/blob/<ref>/<path>`)**:
     *   Logic: `git cat-file blob <ref>:<path>`. Decodes content as UTF-8. If decoding fails (binary), displays a placeholder message. Renders within the web UI.
 *   **Logout (`GET /logout`)**:
@@ -241,8 +242,10 @@ URLs for tree and blob views (`/<repo>/tree/<ref>/<path>`) do not use a strict s
 2.  It matches the URL segment against these refs (longest match first).
 3.  The remainder of the URL is treated as the file path.
 
-### 7.5. Proxy Awareness
-The Flask application wraps its WSGI app with `werkzeug.middleware.proxy_fix.ProxyFix`. This ensures that when deployed behind a reverse proxy (common in production or specific dev setups), the application correctly identifies the client's IP, protocol (HTTPS), and host, which is critical for correct OIDC redirect URI generation.
+### 7.6. Performance Considerations (Tree View)
+Fetching the latest commit for every file in a directory view requires traversing the repository history (`git log`). This introduces a performance penalty that scales with the depth of the history and the number of files.
+*   **Optimization:** The implementation uses batching (50 paths per command) and early-exit streaming to minimize subprocess overhead and avoid full history scans when possible.
+*   **Next Steps:** To support large repositories with deep histories, implementing a caching layer (e.g., Redis or a dedicated table in SQLite) to store path-to-commit mappings would be a recommended improvement.
 
 ## 8. Security Considerations
 *   **Input Validation:**
