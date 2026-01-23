@@ -145,9 +145,15 @@ def getCommitLog(repo_name, ref, limit=100):
     # So actually it's just a long stream of NUL-separated values.
     # Fields per commit: 5 (Hash, Name, RelativeDate, Timestamp, Subject)
     
-    # Let's group by 5
-    # Filter empty strings (end of list)
-    data = [x for x in raw_entries if x]
+    # The output is flat list of fields due to %x00 separator between fields.
+    # -z separates commits with NUL, and our format string uses NUL between fields.
+    # So it is a continuous stream of NUL-separated values.
+    
+    # Remove the last empty string if it exists (due to trailing NUL)
+    if raw_entries and raw_entries[-1] == '':
+        raw_entries.pop()
+        
+    data = raw_entries
     
     for i in range(0, len(data), 5):
         if i + 4 >= len(data):

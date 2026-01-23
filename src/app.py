@@ -9,10 +9,11 @@ import subprocess
 import base64
 from config import config
 import database
-from auth import auth_bp, login_required
+from auth import auth_bp, loginRequired
 import git_utils
 import markdown
 from werkzeug.middleware.proxy_fix import ProxyFix
+from markupsafe import escape
 
 # Configure paths from config
 # Initial load with defaults
@@ -24,7 +25,7 @@ app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 app.register_blueprint(auth_bp)
 
-def create_app():
+def createApp():
     # Re-evaluate paths in case config changed (e.g. via CLI arg)
     data_path = os.path.abspath(config['paths']['data_path'])
     if not os.path.exists(data_path):
@@ -36,10 +37,10 @@ def create_app():
     app.static_folder = os.path.join(data_path, 'static')
 
     # Initialize DB
-    database.init_db()
+    database.initDb()
 
     # Set Secret Key
-    app.secret_key = database.get_or_create_secret_key()
+    app.secret_key = database.getOrCreateSecretKey()
 
     # Ensure repo root exists
     repo_path = config['paths']['repo_path']
@@ -49,11 +50,11 @@ def create_app():
     return app
 
 # Initialize the application
-create_app()
+createApp()
 
 @app.route('/')
 def index():
-    conn = database.get_db()
+    conn = database.getDb()
     try:
         repos = conn.execute("""
             SELECT repos.name, users.preferred_username as owner_name
@@ -68,8 +69,8 @@ def index():
     return render_template('index.html', repos=repos)
 
 @app.route('/create', methods=['GET', 'POST'])
-@login_required
-def create_repo():
+@loginRequired
+def createRepo():
     if request.method == 'POST':
         name = request.form.get('name')
         if not name or not re.match(r'^[a-zA-Z0-9._-]+$', name):
@@ -80,7 +81,7 @@ def create_repo():
             flash("Repository name should not end with .git")
             return render_template('create.html')
 
-        conn = database.get_db()
+        conn = database.getDb()
         try:
             # Check existence
             existing = conn.execute("SELECT 1 FROM repos WHERE name = ?", (name,)).fetchone()
@@ -90,7 +91,7 @@ def create_repo():
 
             # Create on disk
             try:
-                git_utils.init_bare_repo(name)
+                git_utils.initBareRepo(name)
             except git_utils.GitError as e:
                 flash(f"Failed to create repository on disk: {e}")
                 return render_template('create.html')
@@ -112,8 +113,8 @@ def create_repo():
     return render_template('create.html')
 
 @app.route('/settings', methods=['GET', 'POST'])
-@login_required
-def user_settings():
+@loginRequired
+def userSettings():
     if request.method == 'POST':
         password = request.form.get('password')
         if not password:
@@ -125,7 +126,7 @@ def user_settings():
         combined = salt + password
         pw_hash = hashlib.sha256(combined.encode('utf-8')).hexdigest()
 
-        conn = database.get_db()
+        conn = database.getDb()
         conn.execute("UPDATE users SET git_password_hash = ?, git_password_salt = ? WHERE id = ?",
                      (pw_hash, salt, session['user_id']))
         conn.commit()
@@ -134,16 +135,16 @@ def user_settings():
         flash("Git password updated successfully.")
         return redirect(url_for('index'))
 
-    conn = database.get_db()
+    conn = database.getDb()
     repos = conn.execute("SELECT * FROM repos WHERE owner_id = ?", (session['user_id'],)).fetchall()
     conn.close()
 
     return render_template('settings.html', repos=repos)
 
 @app.route('/settings/delete/<repo_name>', methods=['POST'])
-@login_required
-def delete_repo_route(repo_name):
-    conn = database.get_db()
+@loginRequired
+def deleteRepoRoute(repo_name):
+    conn = database.getDb()
     try:
         repo = conn.execute("SELECT * FROM repos WHERE name = ?", (repo_name,)).fetchone()
         if not repo:
@@ -154,10 +155,10 @@ def delete_repo_route(repo_name):
 
         # Delete from disk
         try:
-            git_utils.delete_repo(repo_name)
+            git_utils.deleteRepo(repo_name)
         except Exception as e:
             flash(f"Error deleting repository files: {e}")
-            return redirect(url_for('user_settings'))
+            return redirect(url_for('userSettings'))
 
         # Delete from DB
         conn.execute("DELETE FROM repos WHERE id = ?", (repo['id'],))
@@ -167,40 +168,40 @@ def delete_repo_route(repo_name):
     finally:
         conn.close()
 
-    return redirect(url_for('user_settings'))
+    return redirect(url_for('userSettings'))
 
 @app.route('/<repo_name>/')
-def view_repo(repo_name):
+def viewRepo(repo_name):
     # Check if repo exists in DB
-    conn = database.get_db()
+    conn = database.getDb()
     exists = conn.execute("SELECT 1 FROM repos WHERE name = ?", (repo_name,)).fetchone()
     conn.close()
     if not exists:
          return abort(404)
 
-    if git_utils.is_repo_empty(repo_name):
-        clone_url = url_for('git_smart_http', repo_name=repo_name, subpath='', _external=True).rstrip('/')
+    if git_utils.isRepoEmpty(repo_name):
+        clone_url = url_for('gitSmartHttp', repo_name=repo_name, subpath='', _external=True).rstrip('/')
         default_branch = config['git'].get('default_branch') or 'master'
         return render_template('empty.html', repo_name=repo_name, clone_url=clone_url, default_branch=default_branch)
 
     try:
-        default_branch = git_utils.get_default_branch(repo_name)
+        default_branch = git_utils.getDefaultBranch(repo_name)
     except git_utils.GitError:
         return abort(404)
 
-    return redirect(url_for('view_tree', repo_name=repo_name, ref_path=default_branch))
+    return redirect(url_for('viewTree', repo_name=repo_name, ref_path=default_branch))
 
 @app.route('/<repo_name>/tree/<path:ref_path>')
-def view_tree(repo_name, ref_path):
-    conn = database.get_db()
+def viewTree(repo_name, ref_path):
+    conn = database.getDb()
     exists = conn.execute("SELECT 1 FROM repos WHERE name = ?", (repo_name,)).fetchone()
     conn.close()
     if not exists:
          return abort(404)
 
     try:
-        ref, path = git_utils.split_ref_path(repo_name, ref_path)
-        files = git_utils.list_tree(repo_name, ref, path)
+        ref, path = git_utils.splitRefPath(repo_name, ref_path)
+        files = git_utils.listTree(repo_name, ref, path)
     except git_utils.GitError:
         return abort(404)
 
@@ -221,12 +222,12 @@ def view_tree(repo_name, ref_path):
     for file in files:
         if file['name'].lower() in ['readme.md', 'readme.txt']:
             try:
-                content = git_utils.get_blob_content(repo_name, file['object'])
+                content = git_utils.getBlobContent(repo_name, file['object'])
                 text_content = content.decode('utf-8', errors='replace')
                 if file['name'].lower().endswith('.md'):
                     readme_html = markdown.markdown(text_content, extensions=['fenced_code', 'codehilite'])
                 else:
-                    readme_html = f"<pre>{text_content}</pre>"
+                    readme_html = f"<pre>{escape(text_content)}</pre>"
             except Exception:
                 pass
             break
@@ -240,16 +241,16 @@ def view_tree(repo_name, ref_path):
                            readme_html=readme_html)
 
 @app.route('/<repo_name>/blob/<path:ref_path>')
-def view_blob(repo_name, ref_path):
-    conn = database.get_db()
+def viewBlob(repo_name, ref_path):
+    conn = database.getDb()
     exists = conn.execute("SELECT 1 FROM repos WHERE name = ?", (repo_name,)).fetchone()
     conn.close()
     if not exists:
          return abort(404)
 
     try:
-        ref, path = git_utils.split_ref_path(repo_name, ref_path)
-        content_bytes = git_utils.run_git(repo_name, ['cat-file', 'blob', f"{ref}:{path}"], encoding=None)
+        ref, path = git_utils.splitRefPath(repo_name, ref_path)
+        content_bytes = git_utils.runGit(repo_name, ['cat-file', 'blob', f"{ref}:{path}"], encoding=None)
 
         try:
             content = content_bytes.decode('utf-8')
@@ -278,15 +279,15 @@ def view_blob(repo_name, ref_path):
                            path_parts=path_parts)
 
 @app.route('/<repo_name>/commits/<path:ref>')
-def view_commits(repo_name, ref):
-    conn = database.get_db()
+def viewCommits(repo_name, ref):
+    conn = database.getDb()
     exists = conn.execute("SELECT 1 FROM repos WHERE name = ?", (repo_name,)).fetchone()
     conn.close()
     if not exists:
          return abort(404)
 
     try:
-        commits = git_utils.get_commit_log(repo_name, ref)
+        commits = git_utils.getCommitLog(repo_name, ref)
     except git_utils.GitError:
         return abort(404)
 
@@ -295,7 +296,7 @@ def view_commits(repo_name, ref):
 
 # --- Git Smart HTTP Backend ---
 
-def verify_basic_auth(auth_header):
+def verifyBasicAuth(auth_header):
     if not auth_header:
         return None
 
@@ -306,7 +307,7 @@ def verify_basic_auth(auth_header):
         decoded = base64.b64decode(encoded).decode('utf-8')
         username, password = decoded.split(':', 1)
 
-        conn = database.get_db()
+        conn = database.getDb()
         user = conn.execute("SELECT * FROM users WHERE preferred_username = ?", (username,)).fetchone()
         conn.close()
 
@@ -323,9 +324,9 @@ def verify_basic_auth(auth_header):
         return None
 
 @app.route('/<repo_name>.git/<path:subpath>', methods=['GET', 'POST'])
-def git_smart_http(repo_name, subpath):
+def gitSmartHttp(repo_name, subpath):
     # 1. Verify Repo Existence
-    conn = database.get_db()
+    conn = database.getDb()
     repo = conn.execute("SELECT * FROM repos WHERE name = ?", (repo_name,)).fetchone()
     conn.close()
 
@@ -344,7 +345,7 @@ def git_smart_http(repo_name, subpath):
 
     if is_write:
         auth_header = request.headers.get('Authorization')
-        user = verify_basic_auth(auth_header)
+        user = verifyBasicAuth(auth_header)
 
         if not user:
             return Response(
@@ -411,12 +412,20 @@ def git_smart_http(repo_name, subpath):
 
 
 # CLI Functions
-def import_repo_cli(repo_name, owner_username):
+def importRepoCli(repo_name, owner_username):
     print(f"Importing repo '{repo_name}' for owner '{owner_username}'...")
+
+    if not re.match(r'^[a-zA-Z0-9._-]+$', repo_name):
+        print("Error: Invalid repository name format. Must match ^[a-zA-Z0-9._-]+$")
+        return
+
+    if repo_name.endswith('.git'):
+        print("Error: Repository name should not end with .git")
+        return
 
     # 1. Check disk existence
     try:
-        repo_path = git_utils.get_repo_path(repo_name)
+        repo_path = git_utils.getRepoPath(repo_name)
     except ValueError:
         print("Invalid repo name format.")
         return
@@ -425,7 +434,7 @@ def import_repo_cli(repo_name, owner_username):
         print(f"Error: Repository directory {repo_path} does not exist.")
         return
 
-    conn = database.get_db()
+    conn = database.getDb()
     try:
         # 2. Check DB existence
         row = conn.execute("SELECT 1 FROM repos WHERE name = ?", (repo_name,)).fetchone()
@@ -462,17 +471,17 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.config:
-        from config import reload_config_from_file
-        reload_config_from_file(args.config)
+        from config import reloadConfigFromFile
+        reloadConfigFromFile(args.config)
 
     # Initialize the application (DB, paths, etc) with potentially new config
-    create_app()
+    createApp()
 
     if args.import_repo:
         if not args.owner:
             print("Error: --owner is required.")
             sys.exit(1)
-        import_repo_cli(args.import_repo, args.owner)
+        importRepoCli(args.import_repo, args.owner)
     else:
         # Run Server
         host = config['server']['host']
