@@ -12,8 +12,13 @@
         {% endfor %}
     </div>
 
-    <div class="repo-nav" style="margin-bottom: 1rem;">
+    <div class="repo-nav" style="margin-bottom: 1rem; display: flex; align-items: center; gap: 10px;">
         <a href="{{ url_for('viewCommits', repo_name=repo_name, ref=ref) }}" class="btn">Commits</a>
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <strong>Clone:</strong>
+            <input type="text" value="{{ clone_url }}" readonly onclick="this.select()" 
+                   style="padding: 5px; border: 1px solid #d0d7de; border-radius: 6px; font-family: monospace; width: 300px;">
+        </div>
     </div>
 
     <table class="file-tree">

@@ -232,13 +232,16 @@ def viewTree(repo_name, ref_path):
                 pass
             break
 
+    clone_url = url_for('gitSmartHttp', repo_name=repo_name, subpath='', _external=True).rstrip('/')
+
     return render_template('tree.html',
                            repo_name=repo_name,
                            ref=ref,
                            path=path,
                            files=files,
                            path_parts=path_parts,
-                           readme_html=readme_html)
+                           readme_html=readme_html,
+                           clone_url=clone_url)
 
 @app.route('/<repo_name>/blob/<path:ref_path>')
 def viewBlob(repo_name, ref_path):
