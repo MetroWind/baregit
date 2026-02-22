@@ -32,7 +32,7 @@
         <tbody>
             {% if path %}
                 <tr>
-                    <td><a href="..">..</a></td>
+                    <td><a href="{{ url_for('viewTree', repo_name=repo_name, ref_path=parent_ref_path) }}">..</a></td>
                     <td></td>
                     <td></td>
                 </tr>
