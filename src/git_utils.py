@@ -136,12 +136,51 @@ def listTree(repo_name, ref, path=""):
     return entries
 
 
+class _CommitStreamParser:
+    def __init__(self):
+        self.buffer = b""
+        self.current_commit = None
+
+    def processToken(self, token, needed, results):
+        if token.startswith("START:"):
+            parts = token.split(":", 1)
+            if len(parts) == 2:
+                self.current_commit = {"hash": parts[1]}
+            return
+
+        if not self.current_commit:
+            return
+
+        if "subject" not in self.current_commit:
+            self.current_commit["subject"] = token
+        elif "date_rel" not in self.current_commit:
+            self.current_commit["date_rel"] = token
+        elif "timestamp" not in self.current_commit:
+            self.current_commit["timestamp"] = token
+        else:
+            fname = token.strip()
+            if fname in needed:
+                results[fname] = self.current_commit
+                needed.remove(fname)
+
+    def parseStream(self, stdout, needed, results):
+        while needed:
+            chunk = stdout.read(4096)
+            if not chunk:
+                break
+
+            self.buffer += chunk
+            while b"\0" in self.buffer:
+                token_bytes, self.buffer = self.buffer.split(b"\0", 1)
+                token = token_bytes.decode("utf-8", errors="replace")
+                self.processToken(token, needed, results)
+
+
 def getLatestCommits(repo_name, ref, paths):
     if not paths:
         return {}
 
     repo_path = getRepoPath(repo_name)
-    # Batching to avoid command line length limits
     BATCH_SIZE = 50
     results = {}
 
@@ -149,8 +188,6 @@ def getLatestCommits(repo_name, ref, paths):
         batch = paths[i : i + BATCH_SIZE]
         needed = set(batch)
 
-        # Format: START:<hash>%x00<subject>%x00<date_rel>%x00<timestamp>
-        # We rely on -z to separate files with NUL
         cmd = [
             "git",
             "-C",
@@ -164,67 +201,11 @@ def getLatestCommits(repo_name, ref, paths):
         ] + batch
 
         try:
-            # use Popen to stream and stop early
             with subprocess.Popen(cmd, stdout=subprocess.PIPE, text=False) as proc:
-                # Stream the NUL-terminated output to find the latest commit for each file.
-                # We stop reading as soon as we find all files in the batch.
-                buffer = b""
-                current_commit = None
-
-                while needed:
-                    chunk = proc.stdout.read(4096)
-                    if not chunk:
-                        break
-
-                    buffer += chunk
-                    while b"\0" in buffer:
-                        token_bytes, buffer = buffer.split(b"\0", 1)
-                        token = token_bytes.decode("utf-8", errors="replace")
-
-                        if token.startswith("START:"):
-                            # New commit
-                            # Format: START:<hash> then next tokens are subject, date, ts
-                            # Wait, my format string puts %x00 between fields.
-                            # So tokens will be: [START:hash, subject, date, ts, file1, file2...]
-                            # Actually:
-                            # START:hash \0 subject \0 date \0 ts \0 \nfile1 \0 file2 ...
-
-                            parts = token.split(":", 1)
-                            if len(parts) == 2:
-                                # We are at the start of a commit.
-                                # The next 3 tokens are the rest of the metadata.
-                                # But we are in a loop popping tokens.
-                                # We need a state machine.
-                                current_commit = {"hash": parts[1]}
-                                # We need to fetch next 3 tokens for this commit metadata
-                                # But we need to ensure we have them in buffer?
-                                # The "while b'\0' in buffer" loop handles fetching tokens sequentially.
-                                # So we just set a state "expecting_metadata_1" etc?
-                                # Or simpler: just keep a counter?
-
-                                # Let's use a list as a stack/queue of fields for current commit
-                                # If current_commit is incomplete, fill it.
-                                # If complete, token is a filename.
-                                continue
-
-                        if current_commit:
-                            if "subject" not in current_commit:
-                                current_commit["subject"] = token
-                            elif "date_rel" not in current_commit:
-                                current_commit["date_rel"] = token
-                            elif "timestamp" not in current_commit:
-                                current_commit["timestamp"] = token
-                            else:
-                                # Filename
-                                fname = token.strip()
-                                if fname in needed:
-                                    results[fname] = current_commit
-                                    needed.remove(fname)
-
-                # If we found all, terminate
+                parser = _CommitStreamParser()
+                parser.parseStream(proc.stdout, needed, results)
                 if not needed:
                     proc.terminate()
-
         except Exception:
             pass
 
